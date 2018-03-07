@@ -5,25 +5,27 @@ from scipy.stats import norm
 
 class MSSA(object):
     """docstring for MSSA"""
-    def __init__(self, M):
+    def __init__(self):
         super(MSSA, self).__init__()
-        self.M = M
+        self.M = None
         self.N = None
         self.D = None
 
-    def _compute_covariance_matrix(self, data, N, D):
+    def _compute_covariance_matrix(self, data):
+        assert(self.N is not None)
+        assert(self.D is not None)
         # compress the signal on the time window
-        y = np.zeros((N - self.M+1, self.M))
+        y = np.zeros((self.N - self.M+1, self.M))
         for m in range(self.M):
-            y[:, m] = data[0, m:N-self.M+1+m]
+            y[:, m] = data[0, m:self.N-self.M+1+m]
         Y = y
-        for d in range(1, D):
-            y = np.zeros((N - self.M+1, self.M))
+        for d in range(1, self.D):
+            y = np.zeros((self.N - self.M+1, self.M))
             for m in range(self.M):
-                y[:, m] = data[d, m:N-self.M+1+m]
+                y[:, m] = data[d, m:self.N-self.M+1+m]
             Y = np.hstack((Y, y))
         # calculate the covariance
-        Cemb = np.dot(np.transpose(Y),Y) / (N-self.M+1)
+        Cemb = np.dot(np.transpose(Y),Y) / (self.N-self.M+1)
         return Y, Cemb
 
     @staticmethod
@@ -37,9 +39,10 @@ class MSSA(object):
     def compute_principal_components(self, data):
         self.N = len(data[0])
         self.D = len(data)
+        self.M = int(self.N / 2)
 
         # compute the covariance
-        Y, covar = self._compute_covariance_matrix(data, N, D)
+        Y, covar = self._compute_covariance_matrix(data)
         # compute the eigenbasis
         eig_val, eig_vec = self._compute_eigenbasis(covar)
         # finally the principal components
