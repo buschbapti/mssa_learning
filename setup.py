@@ -9,7 +9,7 @@ setup(
     license="GNU General Public License 3",
     description="MSSA_Learning",
     long_description=open('README.md').read(),
-    install_requires= ["pandas", "numpy"],
+    install_requires= ["pandas", "numpy", "fastdtw"],
     package_dir={'': 'src'},
     packages=['mssa_learning']
 )

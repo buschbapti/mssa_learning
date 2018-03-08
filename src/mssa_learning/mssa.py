@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import numpy as np
 from scipy.stats import norm
+import progressbar
+from mssa_learning.preprocessing import postural_distance
 
 
 class MSSA(object):
@@ -36,10 +38,13 @@ class MSSA(object):
         eig_vec = np.transpose([eig_vec[:, i] for i in indexes])
         return eig_val, eig_vec
 
-    def compute_principal_components(self, data):
+    def compute_principal_components(self, data, M=None):
         self.N = len(data[0])
         self.D = len(data)
-        self.M = int(self.N / 2)
+        if M is None:
+            self.M = int(self.N / 2)
+        else:
+            self.M = M
 
         # compute the covariance
         Y, covar = self._compute_covariance_matrix(data)
@@ -47,20 +52,32 @@ class MSSA(object):
         eig_val, eig_vec = self._compute_eigenbasis(covar)
         # finally the principal components
         PC = np.dot(Y, eig_vec)
-        return PC, eig_vec
+        return PC, eig_vec, eig_val
 
-    def _compute_recontstructed_components(self, PC, eig_vec):
-        assert(self.N is not None)
-        assert(self.D is not None)
+    def _compute_recontstructed_components(self, PC, eig_vec, nb_components):
+        bar = progressbar.ProgressBar()
         RC = []
-        for d in range(self.D):
+        for d in bar(range(self.D)):
             rc = np.zeros((self.N, self.D*self.M))
-            for m in range(self.D*self.M):
+            for m in range(nb_components):
                 buf = np.dot(np.transpose([PC[:, m]]), [np.transpose(eig_vec[d*self.M:(d+1)*self.M, m])])
                 buf = np.flipud(buf)
                 for n in range(self.N):
                     rc[n, m] = np.mean(np.diag(buf, -(self.N-self.M) + n))
+
             RC.append(rc)
         return RC
 
-    # def reconstruct_signal(self, pc)
+    def reconstruct_signal(self, PC, eig_vec, nb_components):
+        rs = []
+        RC = self._compute_recontstructed_components(PC, eig_vec, nb_components)
+        for rc in RC:
+            rs.append(np.sum(rc, 1))
+        return rs
+
+    def signal_distance(self, data, rs_data):
+        dist = 0
+        for i in range(len(data[0])):
+            dist += postural_distance(data[:, i], rs_data[:, i])
+        return dist
+
