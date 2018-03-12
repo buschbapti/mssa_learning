@@ -55,9 +55,8 @@ class MSSA(object):
         return PC, eig_vec, eig_val
 
     def _compute_recontstructed_components(self, PC, eig_vec, nb_components):
-        bar = progressbar.ProgressBar()
         RC = []
-        for d in bar(range(self.D)):
+        for d in range(self.D):
             rc = np.zeros((self.N, self.D*self.M))
             for m in range(nb_components):
                 buf = np.dot(np.transpose([PC[:, m]]), [np.transpose(eig_vec[d*self.M:(d+1)*self.M, m])])
@@ -73,7 +72,7 @@ class MSSA(object):
         RC = self._compute_recontstructed_components(PC, eig_vec, nb_components)
         for rc in RC:
             rs.append(np.sum(rc, 1))
-        return rs
+        return np.array(rs)
 
     def signal_distance(self, data, rs_data):
         dist = 0
