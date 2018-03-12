@@ -26,14 +26,12 @@ import h5py
 import sys
 from collections import OrderedDict
 import json
+from mssa_learning.preprocessing import get_joint_names
+import os
 
 
 def convert_skeleton_file(datafiles, output_filename, output_dir, kinect_id=None):
-    joint_names = ['SpineBase', 'SpineMid', 'Neck', 'Head', 'ShoulderLeft', 'ElbowLeft',
-                   'WristLeft', 'HandLeft', 'ShoulderRight', 'ElbowRight', 'WristRight',
-                   'HandRight', 'HipLeft', 'KneeLeft', 'AnkleLeft', 'FootLeft', 'HipRight',
-                   'KneeRight', 'AnkleRight', 'FootRight', 'SpineShoulder', 'HandTipLeft',
-                   'ThumbLeft', 'HandTipRight', 'ThumbRight']
+    joint_names = get_joint_names()
 
     frames = OrderedDict()
     for k_id, datafile in enumerate(datafiles):
@@ -116,7 +114,9 @@ if __name__ == '__main__':
         "--output_file": str
         })
 
-    with open("./missing_skeletons.json") as datafile:
+    script_path = os.path.dirname(os.path.realpath(__file__))
+
+    with open(join(script_path, "..", "config", "missing_skeletons.json")) as datafile:
         missing_list = json.load(datafile)
 
     if args["--file"]:
@@ -131,7 +131,7 @@ if __name__ == '__main__':
         pid = args["<p>"].zfill(3)
         rid = args["<r>"].zfill(3)
         aid = args["<a>"].zfill(3)
-        datadir = "./nturgb+d_skeletons/"
+        datadir = join(script_path, "..", "data", "nturgb+d_skeletons")
         datafiles = []
         for i in range(3):
             filename = 'C00' + str(i + 1) + 'P' + pid + 'R' + rid + 'A' + aid

@@ -5,7 +5,7 @@ do
 	do
 		for a in `seq 1 60`;
 		do
-			python -W ignore read_skeleton.py $p $r $a -d "./dataset_converted"
+			python -W ignore read_skeleton.py $p $r $a -d "../data/dataset_converted"
 		done
 	done
 done
