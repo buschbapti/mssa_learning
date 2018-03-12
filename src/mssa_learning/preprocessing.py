@@ -4,6 +4,23 @@ from scipy.spatial.distance import euclidean
 from fastdtw import fastdtw
 
 
+def get_joint_names(rebased=False):
+    joint_names = ['SpineBase', 'SpineMid', 'Neck', 'Head', 'ShoulderLeft', 'ElbowLeft',
+                   'WristLeft', 'HandLeft', 'ShoulderRight', 'ElbowRight', 'WristRight',
+                   'HandRight', 'HipLeft', 'KneeLeft', 'AnkleLeft', 'FootLeft', 'HipRight',
+                   'KneeRight', 'AnkleRight', 'FootRight', 'SpineShoulder', 'HandTipLeft',
+                   'ThumbLeft', 'HandTipRight', 'ThumbRight']
+    if rebased:
+        joint_names.remove("SpineBase")
+    return joint_names
+
+
+def extract_position(posture, joint_name, rebased=False):
+    joint_names = get_joint_names(rebased)
+    idx = joint_names.index(joint_name)
+    return np.array(posture)[3*idx:3*idx+3]
+
+
 def postural_distance(post1, post2):
     nb_dof = int(len(post1) / 3)
     post_dist = 0
@@ -48,12 +65,12 @@ def rebase(dataset):
         new_timeserie = []
         for t in timeserie:
             new_time = []
-            SB = t[:3]
-            SM = t[3:6]
-            HL = t[36:39]
-            HR = t[48:51]
+            SB = extract_position(t, "SpineBase")
+            SM = extract_position(t, "SpineMid")
+            HL = extract_position(t, "HipLeft")
+            HR = extract_position(t, "HipRight")
             base_to_cam = base_transformation(SB, HL, HR, SM)
-            for d in range(1, 25):
+            for d in range(1, len(get_joint_names())):
                 p = [t[3*d], t[3*d+1], t[3*d+2], 1]
                 new_p = np.dot(base_to_cam, p).tolist()
                 new_time += new_p[:-1]
