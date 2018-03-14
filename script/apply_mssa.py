@@ -19,16 +19,17 @@ def main():
     mssa = MSSA()
     for recordings in bar(filelist):
         h5_pc = h5py.File(join(script_path, "..", "data", "dataset_converted", "h5", "pc.h5"), 'a')
-        group = h5_pc.create_group(recordings)
+        if recordings not in h5_pc:
+            group = h5_pc.create_group(recordings)
         for camera in ["1", "2", "3"]:
             h5_data = h5py.File(join(script_path, "..", "data", "dataset_converted", "h5", "poses.h5"))
             # only write the file if the original recordings are present
-            if camera in h5_data[recordings]:
+            if camera in h5_data[recordings] and ("PC" + camera) not in h5_pc[recordings]:
                 data = h5_data[recordings][camera]
                 rebased_data = rebase([data])
                 transposed_data = transpose(rebased_data)
                 pc, eig_vec, eig_val = mssa.compute_principal_components(transposed_data[0])
-                group.create_dataset("PC" + camera, data=pc[:,:100])
+                h5_pc[recordings].create_dataset("PC" + camera, data=pc[:,:100])
             h5_data.close()
         h5_pc.close()
 
