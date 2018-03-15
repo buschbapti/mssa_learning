@@ -30,18 +30,20 @@ def postural_distance(post1, post2):
         post_dist += euclidean(p1, p2)
     return post_dist
 
+def principal_components_distance(pc1, pc2):
+    return np.linalg.norm(pc1 - pc2)
 
-def dynamic_time_warping(dataset):
+def dynamic_time_warping(dataset, dist):
     max_index = np.argmax([len(x) for x in dataset])
     ref = dataset[max_index]
     warped_series = []
     for i, timeserie in enumerate(dataset):
         if i != max_index:
-            distance, path = fastdtw(ref, timeserie, dist=postural_distance)
+            distance, path = fastdtw(ref, timeserie, dist=dist)
             ws = []
             for p in path:
                 ws.append(timeserie[p[1]])
-            warped_series.append(ws)
+            warped_series.append(np.array(ws))
         else:
             warped_series.append(ref)
     return warped_series
