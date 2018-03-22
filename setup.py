@@ -11,5 +11,5 @@ setup(
     long_description=open('README.md').read(),
     install_requires= ["pandas", "numpy", "fastdtw", "progressbar"],
     package_dir={'': "src"},
-    packages=["mssa_learning", "mssa_learning.tools"]
+    packages=["mssa_learning", "mssa_learning.tools", "mssa_learning.models"]
 )
