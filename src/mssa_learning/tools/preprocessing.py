@@ -2,6 +2,7 @@
 import numpy as np
 from scipy.spatial.distance import euclidean
 from fastdtw import fastdtw
+import progressbar
 
 
 def get_joint_names(rebased=False):
@@ -37,7 +38,9 @@ def dynamic_time_warping(dataset, dist):
     max_index = np.argmax([len(x) for x in dataset])
     ref = dataset[max_index]
     warped_series = []
-    for i, timeserie in enumerate(dataset):
+    bar = progressbar.ProgressBar()
+    for i in bar(range(len(dataset))):
+        timeserie = dataset[i]
         if i != max_index:
             distance, path = fastdtw(ref, timeserie, dist=dist)
             ws = []
@@ -46,7 +49,7 @@ def dynamic_time_warping(dataset, dist):
             warped_series.append(np.array(ws))
         else:
             warped_series.append(ref)
-    return warped_series
+    return warped_series, len(dataset[max_index])
 
 
 def base_transformation(pb, px1, px2, py):

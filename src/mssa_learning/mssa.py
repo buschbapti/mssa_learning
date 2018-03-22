@@ -2,7 +2,7 @@
 import numpy as np
 from scipy.stats import norm
 import progressbar
-from mssa_learning.preprocessing import postural_distance
+from mssa_learning.tools.preprocessing import postural_distance
 
 
 class MSSA(object):

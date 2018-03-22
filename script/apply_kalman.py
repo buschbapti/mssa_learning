@@ -21,11 +21,18 @@ class ApplyKalman(object):
         data_path = join(script_path, "..", "data", "dataset_converted", "rpl")
         self.files = self.listdir_fullpath(data_path)
         self.record = []
+        self.saved_records = []
         self.lock = RLock()
         self.h5_data_path = join(script_path, "..", "data", "dataset_converted", "h5", "kalman.h5")
 
         self.mock = Mock()
         self.kalman = CommandKalman()
+
+        self.check_already_saved_records()
+
+    def check_already_saved_records(self):
+        h5_data = h5py.File(self.h5_data_path)
+        self.saved_records = h5_data.keys()
 
     @staticmethod
     def listdir_fullpath(d):
@@ -36,29 +43,29 @@ class ApplyKalman(object):
         with self.lock:
             self.record.append(theta_values)
 
-    def save_record(self, f):
+    def save_record(self, group_entry):
         h5_data = h5py.File(self.h5_data_path, 'a')
-        group_entry = f[-16:-4]
-        if not group_entry in h5_data:
-            group = h5_data.create_group(group_entry)
-            group.create_dataset("thetas", data=self.record)
+        group = h5_data.create_group(group_entry)
+        group.create_dataset("thetas", data=self.record)
         h5_data.close()
         with self.lock:
             self.record = []
 
-    def run(self):
+    def run(self, erase=False):
         bar = progressbar.ProgressBar()
         for f in bar(self.files):
-            # start kalman
-            self.kalman.start_record()
-            rospy.sleep(0.5)
-            # play file
-            self.mock.play(f)
-            # stop kalman
-            rospy.sleep(0.5)
-            self.kalman.stop_record()
-            # save recording
-            self.save_record(f)
+            group_entry = f[-16:-4]
+            if not group_entry in self.saved_records:
+                # start kalman
+                self.kalman.start_record()
+                rospy.sleep(0.5)
+                # play file
+                self.mock.play(f)
+                # stop kalman
+                rospy.sleep(0.5)
+                self.kalman.stop_record()
+                # save recording
+                self.save_record(f)
             if rospy.is_shutdown():
                 break
         return 0
@@ -67,4 +74,4 @@ class ApplyKalman(object):
 if __name__ == '__main__':
     rospy.init_node("apply_kalman")
     kalman = ApplyKalman()
-    kalman.run()
+    kalman.run(False)
