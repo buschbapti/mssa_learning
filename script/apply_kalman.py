@@ -65,7 +65,7 @@ class ApplyKalman(object):
                 rospy.sleep(0.5)
                 self.kalman.stop_record()
                 # save recording
-                self.save_record(f)
+                self.save_record(group_entry)
             if rospy.is_shutdown():
                 break
         return 0
