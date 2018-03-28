@@ -1,0 +1,53 @@
+Installing pytorch on plafrim:
+
+- Connect to plafrim:
+$ ssh user@plafrim-ext
+
+- Create private module:
+$ mkdir -p ~/privatemodules/helper
+$ vim ~/privatemodules/helper/0.1.0
+
+- Paste the following:
+#%Module########################################################################
+##
+## Helper modulefile
+##
+
+module-whatis    "Deep Learning Helper Module"
+
+module            add                 compiler/gcc/5.3.0
+module            add                 compiler/intel/64/2017_update4
+module            add                 language/python/3.6
+module            add                 compiler/cuda/9.0/toolkit/9.0
+module            add                 slurm/17.11
+module            add                 mpi/openmpi/gcc/2.0.2
+module            add                 cudnn/6.0
+set               version             0.1.0
+set               prefix              /home/user/privatemodules/helper
+set               root                $prefix/$version
+
+- Load modules:
+$ module load use.own
+$ module load helper/0.1.0
+
+- Create virtual environment:
+$ virtualenv --system-site-packages "$HOME/.venvs/test_pytorch"
+
+- Activate virtual environment:
+$ source activate .venvs/test_pytorch
+
+- Install pytorch:
+$ conda install pytorch torchvision cuda90 -c pytorch
+
+- Create a script to be run (e.g. test.py)
+
+- Add headers lines:
+#!/home/user/.venvs/test_pytorch/bin/python
+#SBATCH -N1
+#SBATCH -p court_sirocco
+#SBATCH --gres=gpu:1
+#SBATCH -e test.err
+#SBATCH -o test.out
+
+- Run the script:
+$ sbatch test.py
