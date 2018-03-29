@@ -8,12 +8,11 @@ from sklearn import preprocessing
 import progressbar
 import random
 
+
 class RNNClassifier(nn.Module):
     def __init__(self, input_size, hidden_size, output_size, steps=100000, epochs=2, scale=False):
         super(RNNClassifier, self).__init__()
-
         self.hidden_size = hidden_size
-
         self.i2h = nn.Linear(input_size + hidden_size, hidden_size)
         self.i2o = nn.Linear(input_size + hidden_size, output_size)
         self.softmax = nn.LogSoftmax(dim=1)
@@ -30,20 +29,19 @@ class RNNClassifier(nn.Module):
         self.scaler = preprocessing.MinMaxScaler()
         self.scale = scale
 
-    def forward(self, input, hidden):
-        combined = torch.cat((input, hidden), 1)
-        hidden = self.i2h(combined)
-        output = self.i2o(combined)
-        output = self.softmax(output)
-        return output, hidden
+    def forward(self, input):
+        combined = torch.cat((input, self.hidden), 1)
+        self.hidden = self.i2h(combined)
+        y = self.i2o(combined)
+        output = self.softmax(y)
+        return output
 
-    def initHidden(self):
+    def init_hidden(self):
         return Variable(torch.zeros(1, self.hidden_size))
 
-    def _train_input_fn(self, features, label):
-        hidden = self.initHidden()
+    def _train_input_fn(self, features):
         for i in range(features.size()[0]):
-            output, hidden = self.forward(features[i], hidden)
+            output = self.forward(features[i])
         return output
 
     def random_example(self, train_input, train_target):
@@ -56,14 +54,20 @@ class RNNClassifier(nn.Module):
         y = Variable(torch.from_numpy(np.array([train_target[r]])))
         return x, y
 
-    def predict(self, inputs):
+    def predict(self, input_data):
         """
         Predict the label given input variable using a forward pass and get the
         largest index
         """
-        top_n, top_i = output.data.topk(1) # Tensor out of Variable with .data
-        category_i = top_i[0][0]
-        return int(category_i)
+        x = torch.zeros(len(input_data), 1, len(input_data[0]))
+        for row in range(len(input_data)):
+            x[row, 0] = torch.from_numpy(input_data[row]).float()
+        x = Variable(x)
+        for i in range(x.size()[0]):
+            output = self.forward(x[i])
+        top_n, top_i = output.data.topk(1)
+        y_pred = int(top_i[0][0])
+        return y_pred
 
     def fit(self, train_input, train_target):
         current_loss = 0
@@ -72,21 +76,22 @@ class RNNClassifier(nn.Module):
         iteration = 0
         for e in range(self.epochs):  # loop over the dataset multiple times
             for i in range(self.steps):
+                self.hidden = self.init_hidden()
                 # zero the parameter gradients
                 self.optimizer.zero_grad()
 
                 # forward + backward + optimize
                 rand_input, rand_label = self.random_example(train_input, train_target)
-                output = self._train_input_fn(rand_input, rand_label.unsqueeze(0))
+                output = self._train_input_fn(rand_input)
                 loss = self.criterion(output, rand_label)
                 loss.backward()
                 loss = loss.data[0]
-                # self.optimizer.step()
+                self.optimizer.step()
                 current_loss += loss
 
                 # Add parameters' gradients to their values, multiplied by learning rate
-                for p in self.parameters():
-                    p.data.add_(-self.learning_rate, p.grad.data)
+                # for p in self.parameters():
+                #     p.data.add_(-self.learning_rate, p.grad.data)
 
                 # Print iter number, loss, name and guess
                 if i % self.print_every == 0:
