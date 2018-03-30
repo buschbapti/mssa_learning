@@ -2,23 +2,20 @@
 import h5py
 import numpy as np
 from mssa_learning.mssa import MSSA
-from mssa_learning.plot import *
-from mssa_learning.preprocessing import *
+from mssa_learning.tools.preprocessing import *
 import os
 from os.path import join
 import progressbar
 
 
 def main():
-    bar = progressbar.ProgressBar()
-
     script_path = os.path.dirname(os.path.realpath(__file__))
-
     filelist = ["P" + str(i).zfill(3) + "R" + str(j).zfill(3) + "A" + str(k).zfill(3) for i in range(1, 41) for j in [1, 2] for k in range(1, 61)]
-
     mssa = MSSA()
+
+    bar = progressbar.ProgressBar()
     for recordings in bar(filelist):
-        h5_pc = h5py.File(join(script_path, "..", "data", "dataset_converted", "h5", "pc.h5"), 'a')
+        h5_pc = h5py.File(join(script_path, "..", "data", "dataset_converted", "h5", "pc_poses.h5"), 'a')
         if recordings not in h5_pc:
             group = h5_pc.create_group(recordings)
         for camera in ["1", "2", "3"]:
@@ -31,6 +28,21 @@ def main():
                 pc, eig_vec, eig_val = mssa.compute_principal_components(transposed_data[0])
                 h5_pc[recordings].create_dataset("PC" + camera, data=pc[:,:100])
             h5_data.close()
+        h5_pc.close()
+
+    bar = progressbar.ProgressBar()
+    for recordings in bar(filelist):
+        h5_pc = h5py.File(join(script_path, "..", "data", "dataset_converted", "h5", "pc_kalman.h5"), 'a')
+        if recordings not in h5_pc:
+            group = h5_pc.create_group(recordings)
+        h5_data = h5py.File(join(script_path, "..", "data", "dataset_converted", "h5", "kalman.h5"))
+        # only write the file if the original recordings are present
+        if len(h5_data[recordings]["thetas"]) > 0 and "PC_thetas" not in h5_pc[recordings]:
+            data = h5_data[recordings]["thetas"]
+            transposed_data = transpose([data])
+            pc, eig_vec, eig_val = mssa.compute_principal_components(transposed_data[0])
+            h5_pc[recordings].create_dataset("PC_thetas", data=pc[:,:100])
+        h5_data.close()
         h5_pc.close()
 
 
