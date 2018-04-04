@@ -1,9 +1,9 @@
 # Multivariate Singular Spectrum Analysis
 
 This repository contains code to apply Multivariate Singular Spectrum Analysis (MSSA) on Human Skeleton data in order to filter the signal.
-The method is described in the notebook [mssa_tutorial](notebooks/mssa_tutorial) which provide an example of the technique over a simple signal in 2 dimensions.
+The method is described in the notebook [mssa_tutorial](notebooks/mssa_tutorial.ipynb) which provide an example of the technique over a simple signal in 2 dimensions.
 
-The second notebook [mssa_dataset_analysis](notebooks/mssa_dataset_analysis) contains examples to apply the technique to skeleton data.
+The second notebook [mssa_dataset_analysis](notebooks/mssa_dataset_analysis.ipynb) contains examples to apply the technique to skeleton data.
 For now, the notebook uses data from the [NTU RGB+D Action Recognition Dataset](http://rose1.ntu.edu.sg/Datasets/actionRecognition.asp).
 This dataset require authorization to be downloaded. The script folder contains python script to convert the data in h5 format.
 
