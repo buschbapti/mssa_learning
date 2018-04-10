@@ -78,9 +78,9 @@ class LSTMClassifier(nn.Module):
         """
         # first normalize the data
         if self.scale:
-            inputs = self.normalize_data(inputs):
+            inputs = self.normalize_data(inputs)
         # initialize hiddent state
-        self.hidden = init_hidden(len(inputs))
+        self.hidden = self.init_hidden(len(inputs))
         # convert input to torch variables
         x = torch.zeros(self.seq_len, len(inputs), self.input_size)
         for i in range(len(inputs)):
@@ -108,7 +108,7 @@ class LSTMClassifier(nn.Module):
 
     def evaluate(self, inputs, targets):
         predicted = self.predict(inputs)
-        nb_error = 0
+        nb_errors = 0
         nb_elem = len(inputs)
         for i, p in enumerate(predicted):
             if p != targets[i]:
