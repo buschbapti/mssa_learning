@@ -5,7 +5,7 @@ import numpy as np
 import math
 
 
-def h5_to_numpy(h5_data, nb_components=None):
+def h5_to_numpy(h5_data, window_size=30, nb_components=None):
     features = []
     labels = []
 
@@ -14,11 +14,12 @@ def h5_to_numpy(h5_data, nb_components=None):
             if len(h5_data[key][rec]) > 0:
                 if not math.isnan(h5_data[key][rec][0][0]):
                     label = int(key[-3:]) - 1
-                    labels.append(label)
-                    if nb_components is None:
-                        features.append(h5_data[key][rec])
-                    else:
-                        features.append(h5_data[key][rec][:, :nb_components])
+                    for i in range(len(h5_data[key][rec]) - window_size):
+                        labels.append(label)
+                        if nb_components is None:
+                            features.append(h5_data[key][rec][i:i+window_size])
+                        else:
+                            features.append(h5_data[key][rec][i:i+window_size, :nb_components])
     return np.array(features), np.array(labels)
 
 
