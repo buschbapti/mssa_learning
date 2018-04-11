@@ -3,7 +3,17 @@ import h5py
 from os.path import join
 import numpy as np
 import math
+import torch
+from torch.utils.data.dataset import Dataset
+from torch.utils.data import DataLoader
 
+
+# class H5Loader(Dataset):
+#     def __init__(self, h5file):
+#         self.h5_data = h5py.File(h5file)
+
+#     def __getitem__(self, index):
+        
 
 def h5_to_numpy(h5_data, window_size=30, nb_components=None):
     features = []
@@ -23,14 +33,15 @@ def h5_to_numpy(h5_data, window_size=30, nb_components=None):
     return np.array(features), np.array(labels)
 
 
-def create_training_base(features, targets, max_target=None):
-    if max_target is None:
+def create_training_base(features, targets, nb_targets=None):
+    if nb_targets is None:
         max_target = max(targets)
         sub_features = features
         sub_targets = targets
     else:
         sub_features = []
         sub_targets = []
+        max_target = nb_targets - 1  # targets classes start at 0
         for i, t in enumerate(targets):
             if t <= max_target:
                 sub_features.append(features[i])
