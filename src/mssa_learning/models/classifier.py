@@ -11,7 +11,7 @@ import json
 
 class Classifier(torch.nn.Module):
     """Abstract Class to represent a generic classifier"""
-    def __init__(self, input_size, hidden_size, output_size, network_type, num_layers=1, batch_size=200, steps=100000, epochs=2, scale=False, save_folder=None):
+    def __init__(self, input_size, hidden_size, output_size, network_type, num_layers=1, batch_size=200, epochs=2, scale=False, save_folder=None):
         super(Classifier, self).__init__()
         __metaclass__ = abc.ABCMeta
         self.input_size = input_size
@@ -22,9 +22,8 @@ class Classifier(torch.nn.Module):
         self.num_layers = num_layers
         self.network_type = network_type
 
-        self.steps = steps
         self.epochs = epochs
-        self.print_every = 5000
+        self.print_every = 1000
         self.save_folder = save_folder
 
         self.scalers = []
@@ -85,16 +84,18 @@ class Classifier(torch.nn.Module):
         Return:
         success_rate -- Pourcentage of correct predictions 
         """
-        predicted = self.predict(test_set[0])
+        nb_elem = 0
         nb_errors = 0
-        nb_elem = len(test_set[0])
-        for i, p in enumerate(predicted):
-            if p != test_set[1][i]:
-                nb_errors += 1
+        for (data, target) in test_set:
+            predicted = self.predict(data)
+            for i, p in enumerate(predicted):
+                if p != int(target[i]):
+                    nb_errors += 1
+            nb_elem += len(target)
         success_rate = (nb_elem - nb_errors) / float(nb_elem)
         return success_rate
 
-    def _fit_normalizer(self, input_data):
+    def _fit_normalizer(self, dataset):
         """
         Fit the MinMaxScaler normalizer on the input_data
         
@@ -150,7 +151,7 @@ class Classifier(torch.nn.Module):
         loss -- Cumulative loss since last scoring
         test_set -- Optional, tuple containing the evaluation set
         """
-        print('%d %d%% %.4f' % (iteration, iteration / float(self.steps * self.epochs) * 100.0, loss))
+        print('%d %.4f' % (iteration, loss))
         self.cumulative_loss.append(float(loss))
         if test_set is not None:
             evaluation = self.evaluate(test_set)

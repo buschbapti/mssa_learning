@@ -5,71 +5,94 @@ import numpy as np
 import math
 import torch
 from torch.utils.data.dataset import Dataset
+from torch.utils.data.sampler import SubsetRandomSampler
 from torch.utils.data import DataLoader
 
 
-# class H5Loader(Dataset):
-#     def __init__(self, h5file):
-#         self.h5_data = h5py.File(h5file)
+class H5Dataset(Dataset):
+    def __init__(self, h5_filepath, window_size=30, normalize=True, nb_components=None, nb_labels=None, transform=None):
+        self.h5_data = h5py.File(h5_filepath)
+        self.indexed_list = []
+        self.indexed_labels = []
+        self.window_size = window_size
+        self.normalize = normalize
+        self.nb_components = nb_components
+        self.nb_labels = nb_labels
+        self.transform = transform
+        self.index_data(window_size)
 
-#     def __getitem__(self, index):
+    def index_data(self, window_size):
+        for key in self.h5_data:
+            for rec in self.h5_data[key]:
+                if len(self.h5_data[key][rec]) > 0:
+                    if not math.isnan(self.h5_data[key][rec][0][0]):
+                        label = int(key[-3:]) - 1
+                        if not (self.nb_labels and label >= self.nb_labels):
+                            for i in range(len(self.h5_data[key][rec]) - window_size):
+                                self.indexed_list.append([key, rec, i, i+window_size])
+                                self.indexed_labels.append(label)
+        if not self.nb_labels:
+            self.nb_labels = max(self.indexed_labels) + 1
+        if not self.nb_components:
+            indexes = self.indexed_list[0]
+            self.nb_components = len(self.h5_data[indexes[0]][indexes[1]][0])
+
+    def __getitem__(self, index):
+        indexes = self.indexed_list[index]
+        # extract data from h5
+        data = self.h5_data[indexes[0]][indexes[1]][indexes[2]:indexes[3], :self.nb_components]
+        label = self.indexed_labels[index]
+        sample = (data, label)
+        if self.transform:
+            sample =  self.transform(sample)
+        return sample
+
+    def __len__(self):
+        return len(self.indexed_list)
+
+
+class H5Loader(object):
+    def __init__(self, h5_filepath, window_size=30, normalize=True, batch_size=200, use_gpu=False, nb_components=None, nb_labels=None, transform=None):
+        self.dataset = H5Dataset(h5_filepath, window_size, normalize=normalize, nb_components=nb_components, nb_labels=nb_labels, transform=transform)
+        self.indices = list(range(len(self.dataset)))
+        self.max_target = self.dataset.nb_labels - 1
+        self.batch_size = batch_size
+        self.use_gpu = use_gpu
+        self.nb_labels = self.dataset.nb_labels
+        self.nb_components = self.dataset.nb_components
         
+    def extract_training_base(self):
+        idx = self.indices
+        np.random.shuffle(idx)
+        nb_samples = int(9*len(idx)/(10*(self.max_target + 1)))
+        samples_per_class = np.zeros(self.max_target + 1)
+        max_samples = np.ones(self.max_target + 1) * nb_samples
+        sub_targets = self.dataset.indexed_labels
 
-def h5_to_numpy(h5_data, window_size=30, nb_components=None):
-    features = []
-    labels = []
+        i = 0
+        train_idx = []
+        test_idx = []
+        while not np.equal(samples_per_class, max_samples).all() and i<len(sub_targets):
+            if samples_per_class[sub_targets[idx[i]]] < nb_samples:
+                train_idx.append(idx[i])
+                samples_per_class[sub_targets[idx[i]]] += 1
+            else:
+                test_idx.append(idx[i])
+            i += 1
 
-    for key in h5_data:
-        for rec in h5_data[key]:
-            if len(h5_data[key][rec]) > 0:
-                if not math.isnan(h5_data[key][rec][0][0]):
-                    label = int(key[-3:]) - 1
-                    for i in range(len(h5_data[key][rec]) - window_size):
-                        labels.append(label)
-                        if nb_components is None:
-                            features.append(h5_data[key][rec][i:i+window_size])
-                        else:
-                            features.append(h5_data[key][rec][i:i+window_size, :nb_components])
-    return np.array(features), np.array(labels)
+        for j in range(i, len(sub_targets)):
+            test_idx.append(idx[j])
 
+        np.random.shuffle(train_idx)
+        np.random.shuffle(test_idx)
 
-def create_training_base(features, targets, nb_targets=None):
-    if nb_targets is None:
-        max_target = max(targets)
-        sub_features = features
-        sub_targets = targets
-    else:
-        sub_features = []
-        sub_targets = []
-        max_target = nb_targets - 1  # targets classes start at 0
-        for i, t in enumerate(targets):
-            if t <= max_target:
-                sub_features.append(features[i])
-                sub_targets.append(t)
+        train_sampler = SubsetRandomSampler(train_idx)
+        test_sampler = SubsetRandomSampler(test_idx)
 
-    idx = np.arange(len(sub_targets))
-    np.random.shuffle(idx)
-    nb_samples = int(9*len(idx)/(10*(max_target + 1)))
-    samples_per_class = np.zeros(max_target + 1)
-    max_samples = np.ones(max_target + 1) * nb_samples
-
-    i = 0
-    train_x = []
-    train_y = []
-    test_x = []
-    test_y = []
-    while not np.equal(samples_per_class, max_samples).all() and i<len(sub_targets):
-        if samples_per_class[sub_targets[idx[i]]] < nb_samples:
-            train_x.append(sub_features[idx[i]])
-            train_y.append(sub_targets[idx[i]])
-            samples_per_class[sub_targets[idx[i]]] += 1
+        if self.use_gpu:
+            train_data = DataLoader(self.dataset, sampler=train_idx, drop_last=True, batch_size=self.batch_size, num_workers=1, pin_memory=True)
+            test_data = DataLoader(self.dataset, sampler=test_idx, drop_last=True, batch_size=self.batch_size, num_workers=1, pin_memory=True)
         else:
-            test_x.append(sub_features[idx[i]])
-            test_y.append(sub_targets[idx[i]])
-        i += 1
-
-    for j in range(i, len(sub_targets)):
-        test_x.append(sub_features[idx[j]])
-        test_y.append(sub_targets[idx[j]])
-
-    return np.array(train_x), np.array(train_y), np.array(test_x), np.array(test_y)
+            train_data = DataLoader(self.dataset, sampler=train_idx, drop_last=True, batch_size=self.batch_size, num_workers=1)
+            test_data = DataLoader(self.dataset, sampler=test_idx, drop_last=True, batch_size=self.batch_size, num_workers=1)
+        return train_data, test_data

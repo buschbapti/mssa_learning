@@ -10,8 +10,8 @@ from mssa_learning.models.classifier import Classifier
 
 class LSTMClassifier(Classifier):
     """Class representing an LSTM based classifier"""
-    def __init__(self, input_size, hidden_size, output_size, seq_len, num_layers=1, batch_size=200, chunk_size=10, steps=100000, epochs=2, scale=False, save_folder=None):
-        super(LSTMClassifier, self).__init__(input_size, hidden_size, output_size, "lstm", num_layers, batch_size, steps, epochs, scale, save_folder)
+    def __init__(self, input_size, hidden_size, output_size, seq_len, num_layers=1, batch_size=200, chunk_size=10, epochs=2, scale=False, save_folder=None):
+        super(LSTMClassifier, self).__init__(input_size, hidden_size, output_size, "lstm", num_layers, batch_size, epochs, scale, save_folder)
         self.chunk_size = chunk_size
         self.use_gpu = False
         self.seq_len = seq_len
@@ -54,36 +54,12 @@ class LSTMClassifier(Classifier):
         Return arguments:
         output -- Value returned by the last layer of the network
         """
+
+        input = torch.transpose(input, 0, 1)
         lstm_out, self.hidden = self.lstm(input, self.hidden)
         y  = self.hidden2label(lstm_out[-1])
         output = self.softmax(y)
         return output
-
-    def _random_examples(self, train_set):
-        """
-        Extract a batch of random examples from the input data
-
-        Keywoard arguments:
-        train_set -- Tuple containing the features to batch from
-        and their corresponding labels
-
-        Return:
-        x -- Tensor containing the batch of features
-        y -- Tensor containing the batch of labels
-        """
-        train_input = train_set[0]
-        train_target = train_set[1]
-        x = torch.zeros(self.seq_len, self.batch_size, self.input_size)
-        y = []
-        for i in range(self.batch_size):
-            r = np.random.randint(0, high=len(train_target))
-            data = train_input[r]
-            for row in range(len(data)):
-                x[row, i] = torch.from_numpy(data[row]).float()
-            y.append(train_target[r])
-        x = Variable(x)
-        y = Variable(torch.from_numpy(np.array(y)))
-        return x, y
 
     def predict(self, inputs):
         """
@@ -96,19 +72,11 @@ class LSTMClassifier(Classifier):
         Return:
         predicted -- The set of predicted categories
         """
-        if self.scale:
-            inputs = self._normalize_data(inputs)
         # initialize hiddent state
         self.hidden = self._init_hidden(len(inputs))
-        # convert input to torch variables
-        x = torch.zeros(self.seq_len, len(inputs), self.input_size)
-        for i in range(len(inputs)):
-            data = inputs[i]
-            for row in range(len(data)):
-                x[row, i] = torch.from_numpy(data[row]).float()
-        x = Variable(x)
+        inputs = Variable(inputs)
         # predict
-        output = self._forward(x)
+        output = self._forward(inputs)
         # extract prediction by taking the max of the predicted vector
         predicted = []
         for i in range(len(inputs)):
@@ -129,29 +97,22 @@ class LSTMClassifier(Classifier):
         current_loss = 0
         self.cumulative_loss = []
         self.cumulative_eval = []
-        if self.scale:
-            self._fit_normalizer(train_set[0])
-            train_input = self._normalize_data(train_set[0])
-            train_target = train_set[1]
-        else:
-            train_input = train_set[0]
-            train_target = train_set[1]
         iteration = 0
         try:
             for e in range(self.epochs):  # loop over the dataset multiple times
-                for i in range(self.steps):
+                for batch_idx, (data, target) in enumerate(train_set):
+                    data, target = Variable(data), Variable(target)
                     # zero the parameter gradients
                     self.hidden = self._init_hidden()
-                    # forward + backward + optimize
-                    rand_input, rand_target = self._random_examples((train_input, train_target))
                     # truncated backprogation
-                    input_parts = torch.split(rand_input, self.chunk_size, dim=0)
+                    input_parts = torch.split(data, self.chunk_size, dim=1)
                     for input_part in input_parts:
                         self.optimizer.zero_grad()
                         self.hidden[0].detach_()
                         self.hidden[1].detach_()
                         output = self._forward(input_part)
-                        loss = self.criterion(output, rand_target)
+                        target = target.view(target.numel())
+                        loss = self.criterion(output, target)
                         loss.backward()
                         loss = loss.data[0]
                         self.optimizer.step()
