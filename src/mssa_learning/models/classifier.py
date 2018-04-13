@@ -1,7 +1,5 @@
 import torch.nn
-import numpy as np
 from sklearn import preprocessing
-import progressbar
 import abc
 from os.path import join
 from os.path import isdir
@@ -66,7 +64,7 @@ class Classifier(torch.nn.Module):
     def fit(self, train_set, test_set=None):
         """
         Fit the network to the train set in input
-        
+
         Keywoard arguments:
         train_set -- Tuple containing the features to train on
         and their corresponding labels
@@ -78,13 +76,13 @@ class Classifier(torch.nn.Module):
     def evaluate(self, test_set):
         """
         Evaluate the network on the inputs and their corresponding targets
-        
+
         Keywoard arguments:
         test_set -- Tuple containing the features to evaluate
         the learned model on and their corresponding labels
 
         Return:
-        success_rate -- Pourcentage of correct predictions 
+        success_rate -- Pourcentage of correct predictions
         """
         nb_elem = 0
         nb_errors = 0
@@ -97,30 +95,30 @@ class Classifier(torch.nn.Module):
         success_rate = (nb_elem - nb_errors) / float(nb_elem)
         return success_rate
 
-    def _fit_normalizer(self, dataset):
-        """
-        Fit the MinMaxScaler normalizer on the input_data
-        
-        Keywoard arguments:
-        input_data -- Data to fit the normalizer on 
-        """
-        for d in range(self.input_size):
-            self.scalers[d] = self.scalers[d].fit(input_data[:, :, d])
+    # def _fit_normalizer(self, dataset):
+    #     """
+    #     Fit the MinMaxScaler normalizer on the input_data
 
-    def _normalize_data(self, input_data):
-        """
-        Apply the fitted MinMaxScaler normalizer on the input_data
-        
-        Keywoard arguments:
-        input_data -- Data to normalize
+    #     Keywoard arguments:
+    #     input_data -- Data to fit the normalizer on
+    #     """
+    #     for d in range(self.input_size):
+    #         self.scalers[d] = self.scalers[d].fit(input_data[:, :, d])
 
-        Return:
-        scaled_data -- Normalized data
-        """
-        scaled_input = np.zeros((len(input_data), self.seq_len, self.input_size))
-        for d in range(self.input_size):
-            scaled_input[:, :, d] = self.scalers[d].transform(input_data[:, :, d])
-        return scaled_input
+    # def _normalize_data(self, input_data):
+    #     """
+    #     Apply the fitted MinMaxScaler normalizer on the input_data
+
+    #     Keywoard arguments:
+    #     input_data -- Data to normalize
+
+    #     Return:
+    #     scaled_data -- Normalized data
+    #     """
+    #     scaled_input = np.zeros((len(input_data), self.seq_len, self.input_size))
+    #     for d in range(self.input_size):
+    #         scaled_input[:, :, d] = self.scalers[d].transform(input_data[:, :, d])
+    #     return scaled_input
 
     def _save_results(self):
         """
@@ -147,7 +145,7 @@ class Classifier(torch.nn.Module):
     def _score(self, iteration, loss, test_set=None):
         """
         Score the learned model and print learning progress
-        
+
         Keywoard arguments:
         iteration -- Current iteration
         loss -- Cumulative loss since last scoring

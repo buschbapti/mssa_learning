@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 import h5py
-from os.path import join
 import numpy as np
 import math
-import torch
 from torch.utils.data.dataset import Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
 from torch.utils.data import DataLoader
@@ -29,7 +27,7 @@ class H5Dataset(Dataset):
                         label = int(key[-3:]) - 1
                         if not (self.nb_labels and label >= self.nb_labels):
                             for i in range(len(self.h5_data[key][rec]) - window_size):
-                                self.indexed_list.append([key, rec, i, i+window_size])
+                                self.indexed_list.append([key, rec, i, i + window_size])
                                 self.indexed_labels.append(label)
         if not self.nb_labels:
             self.nb_labels = max(self.indexed_labels) + 1
@@ -44,7 +42,7 @@ class H5Dataset(Dataset):
         label = self.indexed_labels[index]
         sample = (data, label)
         if self.transform:
-            sample =  self.transform(sample)
+            sample = self.transform(sample)
         return sample
 
     def __len__(self):
@@ -60,7 +58,7 @@ class H5Loader(object):
         self.use_gpu = use_gpu
         self.nb_labels = self.dataset.nb_labels
         self.nb_components = self.dataset.nb_components
-        
+
     def extract_training_base(self):
         idx = self.indices
         np.random.shuffle(idx)
@@ -72,7 +70,7 @@ class H5Loader(object):
         i = 0
         train_idx = []
         test_idx = []
-        while not np.equal(samples_per_class, max_samples).all() and i<len(sub_targets):
+        while not np.equal(samples_per_class, max_samples).all() and i < len(sub_targets):
             if samples_per_class[sub_targets[idx[i]]] < nb_samples:
                 train_idx.append(idx[i])
                 samples_per_class[sub_targets[idx[i]]] += 1
@@ -83,16 +81,16 @@ class H5Loader(object):
         for j in range(i, len(sub_targets)):
             test_idx.append(idx[j])
 
-        np.random.shuffle(train_idx)
-        np.random.shuffle(test_idx)
+        #np.random.shuffle(train_idx)
+        #np.random.shuffle(test_idx)
 
         train_sampler = SubsetRandomSampler(train_idx)
         test_sampler = SubsetRandomSampler(test_idx)
 
         if self.use_gpu:
-            train_data = DataLoader(self.dataset, sampler=train_idx, drop_last=True, batch_size=self.batch_size, num_workers=1, pin_memory=True)
-            test_data = DataLoader(self.dataset, sampler=test_idx, drop_last=True, batch_size=self.batch_size, num_workers=1, pin_memory=True)
+            train_data = DataLoader(self.dataset, sampler=train_sampler, drop_last=True, batch_size=self.batch_size, num_workers=1, pin_memory=True)
+            test_data = DataLoader(self.dataset, sampler=test_sampler, drop_last=True, batch_size=self.batch_size, num_workers=1, pin_memory=True)
         else:
-            train_data = DataLoader(self.dataset, sampler=train_idx, drop_last=True, batch_size=self.batch_size, num_workers=1)
-            test_data = DataLoader(self.dataset, sampler=test_idx, drop_last=True, batch_size=self.batch_size, num_workers=1)
+            train_data = DataLoader(self.dataset, sampler=train_sampler, drop_last=True, batch_size=self.batch_size, num_workers=1)
+            test_data = DataLoader(self.dataset, sampler=test_sampler, drop_last=True, batch_size=self.batch_size, num_workers=1)
         return train_data, test_data

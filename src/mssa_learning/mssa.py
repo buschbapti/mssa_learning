@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 import numpy as np
-from scipy.stats import norm
-import progressbar
 from mssa_learning.tools.preprocessing import postural_distance
 
 
@@ -79,4 +77,3 @@ class MSSA(object):
         for i in range(len(data[0])):
             dist += postural_distance(data[:, i], rs_data[:, i])
         return dist
-

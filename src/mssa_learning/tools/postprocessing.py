@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import numpy as np
-from mssa_learning.tools.preprocessing import get_joint_names, extract_position
+from mssa_learning.tools.preprocessing import extract_position
 
 
 def calculate_lengths(timeserie):
