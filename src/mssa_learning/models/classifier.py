@@ -136,8 +136,8 @@ class Classifier(torch.nn.Module):
     def calculate_confusion_matrix(self, test_set):
         y_pred = []
         y_test = []
-        for (data, target) in test_data:
-            predicted = model.predict(data)
+        for (data, target) in test_set:
+            predicted = self.predict(data)
             for i, p in enumerate(predicted):
                 y_pred.append(p)
                 y_test.append(int(target[i]))
