@@ -95,31 +95,6 @@ class Classifier(torch.nn.Module):
         success_rate = (nb_elem - nb_errors) / float(nb_elem)
         return success_rate
 
-    # def _fit_normalizer(self, dataset):
-    #     """
-    #     Fit the MinMaxScaler normalizer on the input_data
-
-    #     Keywoard arguments:
-    #     input_data -- Data to fit the normalizer on
-    #     """
-    #     for d in range(self.input_size):
-    #         self.scalers[d] = self.scalers[d].fit(input_data[:, :, d])
-
-    # def _normalize_data(self, input_data):
-    #     """
-    #     Apply the fitted MinMaxScaler normalizer on the input_data
-
-    #     Keywoard arguments:
-    #     input_data -- Data to normalize
-
-    #     Return:
-    #     scaled_data -- Normalized data
-    #     """
-    #     scaled_input = np.zeros((len(input_data), self.seq_len, self.input_size))
-    #     for d in range(self.input_size):
-    #         scaled_input[:, :, d] = self.scalers[d].transform(input_data[:, :, d])
-    #     return scaled_input
-
     def _save_results(self):
         """
         Save the learning curve in a json file
