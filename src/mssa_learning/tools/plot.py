@@ -47,6 +47,21 @@ import matplotlib.pyplot as plt
 #     return fig
 
 
+def plot_data_distribution(data_set, nb_labels, title='Data distribution',):
+    labels = np.zeros(nb_labels)
+    for (_, target) in data_set:
+        for l in target:
+            labels[int(l)] += 1
+    classes = np.arange(nb_labels)
+    plt.bar(classes, labels)
+    classes = [str(x) for x in classes]
+    tick_marks = np.arange(len(classes)) + 0.5
+    plt.title(title)
+    plt.tight_layout()
+    plt.xticks(tick_marks, classes)
+    plt.ylabel('Number of examples')
+    plt.xlabel('Label')
+
 def plot_confusion_matrix(cm, title='Confusion matrix', cmap=plt.cm.Blues):
     """
     This function prints and plots the confusion matrix.
