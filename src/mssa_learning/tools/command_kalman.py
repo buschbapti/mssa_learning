@@ -1,4 +1,3 @@
-import datetime
 import requests
 
 
@@ -16,14 +15,11 @@ class CommandKalman(object):
             req_headers.update(headers)
         return requests.request(method=method, url=self.HOST + url, headers=req_headers, **kwargs)
 
-
     def is_status_ok(self, status):
         return 200 <= status < 300
 
-
     def start_record(self):
         return self.call('POST', url='/record/start', json=self.SESSION)
-
 
     def stop_record(self):
         return self.call('POST', url='/record/stop', json={'observator': 'observator_test'})

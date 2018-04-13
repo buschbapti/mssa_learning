@@ -5,7 +5,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 from sklearn import preprocessing
-import progressbar
 
 
 class DNNClassifier(torch.nn.Module):
@@ -70,7 +69,7 @@ class DNNClassifier(torch.nn.Module):
             input_data = self.scaler.transform(inputs)
         else:
             input_data = inputs
-        x =  torch.from_numpy(input_data).float()
+        x = torch.from_numpy(input_data).float()
         outputs = self.forward(Variable(x))
         # value, index = torch.max(outputs.data, 0, keepdim=True)
         pred = outputs.data.max(0)[1]

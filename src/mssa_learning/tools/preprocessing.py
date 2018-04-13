@@ -31,8 +31,10 @@ def postural_distance(post1, post2):
         post_dist += euclidean(p1, p2)
     return post_dist
 
+
 def principal_components_distance(pc1, pc2):
     return np.linalg.norm(pc1 - pc2)
+
 
 def dynamic_time_warping(dataset, dist):
     max_index = np.argmax([len(x) for x in dataset])

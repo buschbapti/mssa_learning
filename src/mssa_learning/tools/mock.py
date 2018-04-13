@@ -28,7 +28,6 @@ class Mock(object):
                 print(line)
                 raise e
 
-
     def record(self, path):
         with open(path, "w") as rpl_file:
             datetime.datetime.now()
@@ -38,4 +37,3 @@ class Mock(object):
                 data, addr = self.SOCK.recvfrom(8294400) # buffer size is 1024 bytes
                 rpl_file.write(data)
                 rpl_file.write(self.SEPARATOR+str((datetime.datetime.now() - start).total_seconds())+'\n')
-

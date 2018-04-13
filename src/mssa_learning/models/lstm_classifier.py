@@ -2,9 +2,7 @@
 import torch
 from torch.autograd import Variable
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
-import numpy as np
 from mssa_learning.models.classifier import Classifier
 
 
@@ -57,7 +55,7 @@ class LSTMClassifier(Classifier):
 
         input = torch.transpose(input, 0, 1)
         lstm_out, self.hidden = self.lstm(input, self.hidden)
-        y  = self.hidden2label(lstm_out[-1])
+        y = self.hidden2label(lstm_out[-1])
         output = self.softmax(y)
         return output
 
@@ -87,7 +85,7 @@ class LSTMClassifier(Classifier):
     def fit(self, train_set, test_set=None):
         """
         Fit the network to the train set in input
-        
+
         Keywoard arguments:
         train_set -- Tuple containing the features to train on
         and their corresponding labels
@@ -121,11 +119,10 @@ class LSTMClassifier(Classifier):
                         self._score(iteration, current_loss, test_set)
                         current_loss = 0
                     iteration += 1
-                    
+
         except KeyboardInterrupt:
             print("Learning process interrupted")
         finally:
             # save results to file
             self._save_results()
             self._save_model()
-        
