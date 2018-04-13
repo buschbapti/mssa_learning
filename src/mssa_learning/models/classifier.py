@@ -7,6 +7,8 @@ from os.path import join
 from os.path import isdir
 from os import makedirs
 import json
+from sklearn.metrics import confusion_matrix
+import itertools
 
 
 class Classifier(torch.nn.Module):
@@ -23,7 +25,7 @@ class Classifier(torch.nn.Module):
         self.network_type = network_type
 
         self.epochs = epochs
-        self.print_every = 10
+        self.print_every = 100
         self.save_folder = save_folder
 
         self.scalers = []
@@ -157,3 +159,13 @@ class Classifier(torch.nn.Module):
             evaluation = self.evaluate(test_set)
             print('success rate: %f' % (evaluation))
             self.cumulative_eval.append(float(evaluation))
+
+    def calculate_confusion_matrix(self, test_set):
+        y_pred = []
+        y_test = []
+        for (data, target) in test_data:
+            predicted = model.predict(data)
+            for i, p in enumerate(predicted):
+                y_pred.append(p)
+                y_test.append(int(target[i]))
+        return confusion_matrix(y_test, y_pred)
