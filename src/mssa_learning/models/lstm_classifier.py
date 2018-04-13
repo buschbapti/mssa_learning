@@ -116,10 +116,8 @@ class LSTMClassifier(Classifier):
                         loss.backward()
                         loss = loss.data[0]
                         self.optimizer.step()
-                        current_loss += loss
                     if iteration % self.print_every == 0:
-                        self._score(iteration, current_loss, test_set)
-                        current_loss = 0
+                        self._score(iteration, loss, test_set)
                     iteration += 1
                     
         except KeyboardInterrupt:
