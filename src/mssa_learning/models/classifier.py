@@ -23,7 +23,7 @@ class Classifier(torch.nn.Module):
         self.network_type = network_type
 
         self.epochs = epochs
-        self.print_every = 1000
+        self.print_every = 10
         self.save_folder = save_folder
 
         self.scalers = []
