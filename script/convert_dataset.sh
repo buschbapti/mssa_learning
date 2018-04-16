@@ -1,11 +1,6 @@
 #!/bin/bash
-for p in `seq 1 40`;
+DATASET_DIR="../data/nturgb+d_skeletons"
+for entry in $DATASET_DIR/*
 do
-	for r in `seq 1 2`;
-	do
-		for a in `seq 1 60`;
-		do
-			python -W ignore read_skeleton.py $p $r $a -d "../data/dataset_converted"
-		done
-	done
+	python -W ignore convert_skeleton.py -f $entry -d ../data/dataset_converted
 done
